@@ -713,11 +713,13 @@ async function loadCustomerPortal(){
   const [
     {data:profile,error:profileError},
     {data:appointments,error:appointmentError},
-    {data:benefits,error:benefitsError}
+    {data:benefits,error:benefitsError},
+    {data:preferences,error:preferencesError}
   ]=await Promise.all([
     supabase.rpc("get_my_customer_profile"),
     supabase.rpc("get_my_appointments"),
-    supabase.rpc("get_my_benefits")
+    supabase.rpc("get_my_benefits"),
+    supabase.rpc("get_my_consumption_preferences")
   ]);
 
   if(profileError||!profile?.length){
@@ -773,6 +775,22 @@ async function loadCustomerPortal(){
       }).join("");
     }
   }
+
+
+  const preferenceRows=preferences||[];
+  const topByGroup=group=>preferenceRows.find(item=>item.item_group===group);
+
+  const setPreference=(group,nameId,metaId)=>{
+    const item=topByGroup(group);
+    $(nameId).textContent=item?.item_name||"—";
+    $(metaId).textContent=item
+      ?`${Number(item.quantity||0).toLocaleString("pt-BR")}x • ${money(item.total_amount)}`
+      :(preferencesError?"Não foi possível carregar":"Sem histórico ainda");
+  };
+
+  setPreference("service","portalFavoriteService","portalFavoriteServiceMeta");
+  setPreference("product","portalFavoriteProduct","portalFavoriteProductMeta");
+  setPreference("convenience","portalFavoriteConvenience","portalFavoriteConvenienceMeta");
 
   const now=new Date();
   const upcoming=rows.filter(item=>
