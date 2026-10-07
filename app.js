@@ -1069,7 +1069,10 @@ $("customerAccountForm")?.addEventListener("submit",async e=>{
     const {data,error}=await supabase.auth.signUp({
       email,
       password,
-      options:{data:{account_type:"customer"}}
+      options:{
+        data:{account_type:"customer"},
+        emailRedirectTo:window.location.origin
+      }
     });
 
     if(error){
