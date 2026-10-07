@@ -7,6 +7,7 @@ const supabase=createClient(
 
 const $=id=>document.getElementById(id);
 const money=value=>new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(Number(value||0));
+const CUSTOMER_PORTAL_URL="https://agendamento.c7barbeariatradicional.com.br/";
 
 let services=[];
 let professionals=[];
@@ -1140,7 +1141,7 @@ $("forgotPasswordBtn")?.addEventListener("click",async()=>{
   $("accountMessage").textContent="Enviando e-mail de recuperação...";
 
   const {error}=await supabase.auth.resetPasswordForEmail(email,{
-    redirectTo:window.location.origin
+    redirectTo:CUSTOMER_PORTAL_URL
   });
 
   $("accountMessage").textContent=error
@@ -1220,7 +1221,7 @@ $("customerAccountForm")?.addEventListener("submit",async e=>{
       password,
       options:{
         data:{account_type:"customer"},
-        emailRedirectTo:window.location.origin
+        emailRedirectTo:CUSTOMER_PORTAL_URL
       }
     });
 
