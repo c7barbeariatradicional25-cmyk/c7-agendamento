@@ -250,6 +250,11 @@
 
           <div id="portalProfile" class="portal-profile"></div>
 
+          <div class="portal-account-actions">
+            <button id="editProfileBtn" class="secondary-action-btn" type="button">EDITAR MEUS DADOS</button>
+            <button id="changePasswordBtn" class="secondary-action-btn" type="button">TROCAR SENHA</button>
+          </div>
+
           <div class="portal-section">
             <div class="portal-section-head">
               <span>MEUS BENEFÍCIOS</span>
@@ -346,6 +351,85 @@
     </section>
   </div>
 
+  <div id="profileSettingsModal" class="account-modal hidden" role="dialog" aria-modal="true">
+    <div class="account-backdrop" data-close-profile-settings></div>
+    <section class="account-card">
+      <div class="account-head">
+        <div>
+          <span class="eyebrow">MINHA ÁREA C7</span>
+          <h2>Meus dados</h2>
+        </div>
+        <button type="button" class="account-close" data-close-profile-settings>×</button>
+      </div>
+
+      <form id="profileSettingsForm" class="identity-form">
+        <label>
+          <span>Nome</span>
+          <input id="profileFullName" type="text" autocomplete="name" required>
+        </label>
+
+        <label>
+          <span>WhatsApp</span>
+          <input id="profilePhone" type="tel" inputmode="tel" autocomplete="tel" required>
+        </label>
+
+        <label>
+          <span>Data de nascimento</span>
+          <input id="profileBirthDate" type="date">
+        </label>
+
+        <label class="consent-row">
+          <input id="profileMarketingOptIn" type="checkbox">
+          <span>Quero receber novidades, benefícios e condições especiais da C7.</span>
+        </label>
+
+        <label>
+          <span>E-mail da conta</span>
+          <input id="profileEmail" type="email" readonly>
+        </label>
+
+        <p id="profileSettingsMessage" class="form-message"></p>
+
+        <button class="continue-btn" type="submit">
+          SALVAR ALTERAÇÕES
+          <span>✓</span>
+        </button>
+      </form>
+    </section>
+  </div>
+
+  <div id="passwordModal" class="account-modal hidden" role="dialog" aria-modal="true">
+    <div class="account-backdrop" data-close-password-modal></div>
+    <section class="account-card">
+      <div class="account-head">
+        <div>
+          <span class="eyebrow">SEGURANÇA</span>
+          <h2>Nova senha</h2>
+        </div>
+        <button type="button" class="account-close" data-close-password-modal>×</button>
+      </div>
+
+      <form id="passwordForm" class="identity-form">
+        <label>
+          <span>Nova senha</span>
+          <input id="newPassword" type="password" minlength="8" autocomplete="new-password" required>
+        </label>
+
+        <label>
+          <span>Confirmar nova senha</span>
+          <input id="confirmNewPassword" type="password" minlength="8" autocomplete="new-password" required>
+        </label>
+
+        <p id="passwordMessage" class="form-message"></p>
+
+        <button class="continue-btn" type="submit">
+          ATUALIZAR SENHA
+          <span>✓</span>
+        </button>
+      </form>
+    </section>
+  </div>
+
   <div id="customerAccountModal" class="account-modal hidden" role="dialog" aria-modal="true">
     <div class="account-backdrop" data-close-customer-account></div>
     <section class="account-card">
@@ -372,6 +456,8 @@
           <span>Senha</span>
           <input id="accountPassword" type="password" minlength="8" autocomplete="current-password" required>
         </label>
+
+        <button id="forgotPasswordBtn" class="forgot-password-btn" type="button">ESQUECI MINHA SENHA</button>
 
         <p id="accountMessage" class="form-message"></p>
 
