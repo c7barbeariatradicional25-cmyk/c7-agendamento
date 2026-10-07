@@ -1096,3 +1096,66 @@ button{cursor:pointer}
     grid-template-columns:1fr;
   }
 }
+
+/* ENTRADA DA ÁREA C7 NA HOME */
+.customer-login-entry{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:18px;
+  align-items:center;
+  margin-bottom:22px;
+  padding:18px;
+  border:1px solid #d9c6b5;
+  border-radius:16px;
+  background:linear-gradient(135deg,#f7eee5,#fffaf5);
+}
+.customer-login-entry strong{
+  display:block;
+  margin-top:5px;
+  color:#2c2119;
+  font:700 22px/1.05 Oswald,sans-serif;
+}
+.customer-login-entry p{
+  margin:7px 0 0;
+  color:#7c6a5d;
+  font-size:10px;
+  line-height:1.55;
+}
+.customer-area-login-btn{
+  min-height:46px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:0 16px;
+  border:1px solid #6b4932;
+  border-radius:11px;
+  background:#201812;
+  color:#fff;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.6px;
+  white-space:nowrap;
+}
+.customer-area-login-btn span{font-size:16px}
+.customer-area-login-btn:hover{background:#4f3424}
+.booking-divider{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:0 0 22px;
+  color:#9a8778;
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:.8px;
+}
+.booking-divider:before,.booking-divider:after{
+  content:"";
+  height:1px;
+  flex:1;
+  background:#eadfd5;
+}
+.booking-divider span{white-space:nowrap}
+@media(max-width:560px){
+  .customer-login-entry{grid-template-columns:1fr}
+  .customer-area-login-btn{width:100%;justify-content:space-between}
+}
