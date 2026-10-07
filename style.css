@@ -877,3 +877,140 @@ button{cursor:pointer}
     align-items:flex-start;
   }
 }
+
+
+/* AÇÕES DE AGENDAMENTO + BENEFÍCIOS */
+.portal-appointment-main{
+  min-width:0;
+  display:grid;
+  gap:3px;
+}
+.portal-appointment-actions{
+  display:flex;
+  gap:7px;
+  margin-top:7px;
+  flex-wrap:wrap;
+}
+.portal-appointment-actions button{
+  min-height:30px;
+  padding:0 9px;
+  border:1px solid #d8c6b7;
+  border-radius:8px;
+  background:#fffaf5;
+  color:#674731;
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:.4px;
+}
+.portal-appointment-actions button:hover{
+  background:#f1e5d9;
+}
+.portal-appointment-actions button.danger{
+  border-color:#dfc2bb;
+  color:#8a473b;
+  background:#fff7f5;
+}
+.portal-appointment-actions button.danger:hover{
+  background:#f6e5e1;
+}
+.reschedule-info{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:14px;
+}
+.reschedule-info>div{
+  padding:10px;
+  border:1px solid #e0d3c7;
+  border-radius:10px;
+  background:#fbf5ef;
+}
+.reschedule-info span,
+.reschedule-date-label>span{
+  display:block;
+  color:#91765f;
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:.55px;
+}
+.reschedule-info strong{
+  display:block;
+  margin-top:4px;
+  font-size:10px;
+  color:#33271e;
+}
+.reschedule-date-label{
+  display:grid;
+  gap:6px;
+  margin-bottom:14px;
+}
+.reschedule-date-label input{
+  width:100%;
+  height:44px;
+  padding:0 10px;
+  border:1px solid #dbcbbd;
+  border-radius:9px;
+  background:#fff;
+  color:#2f251e;
+}
+.benefits-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.benefit-card{
+  position:relative;
+  overflow:hidden;
+  padding:13px;
+  border:1px solid #dbc6b4;
+  border-radius:13px;
+  background:linear-gradient(145deg,#fffaf4,#f0e0d1);
+}
+.benefit-card:after{
+  content:"";
+  position:absolute;
+  width:90px;
+  height:90px;
+  right:-34px;
+  top:-40px;
+  border-radius:50%;
+  background:rgba(115,76,47,.08);
+}
+.benefit-card>div:first-child{
+  display:grid;
+  gap:4px;
+}
+.benefit-card span{
+  color:#98765c;
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:.65px;
+}
+.benefit-card strong{
+  color:#3a2a20;
+  font-size:11px;
+}
+.benefit-card small{
+  color:#7f6d60;
+  font-size:8px;
+  line-height:1.4;
+}
+.benefit-value{
+  margin-top:11px;
+  color:#6e452a;
+  font:700 22px Oswald,sans-serif;
+}
+.benefit-card em{
+  display:block;
+  margin-top:4px;
+  color:#8e7c6e;
+  font-size:7px;
+  font-style:normal;
+}
+
+@media(max-width:560px){
+  .reschedule-info,
+  .benefits-grid{
+    grid-template-columns:1fr;
+  }
+}
