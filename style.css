@@ -659,3 +659,35 @@ button{cursor:pointer}
     grid-template-columns:1fr;
   }
 }
+
+
+/* AÇÕES DA CONFIRMAÇÃO */
+.confirmation-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
+.secondary-action-btn{
+  min-height:44px;
+  border:1px solid #d7c6b7;
+  border-radius:11px;
+  background:#fffaf5;
+  color:#5f432f;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.45px;
+}
+.secondary-action-btn:hover{
+  background:#f3e7db;
+  border-color:#b98b69;
+}
+.secondary-action-btn.whatsapp{
+  background:#efe8df;
+  border-color:#ccb59f;
+  color:#3d4d39;
+}
+@media(max-width:560px){
+  .confirmation-actions{
+    grid-template-columns:1fr;
+  }
+}
