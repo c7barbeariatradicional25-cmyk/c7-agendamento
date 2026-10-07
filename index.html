@@ -22,10 +22,10 @@
         <p>Agende em poucos passos e acompanhe tudo pela sua área C7.</p>
 
         <div class="booking-steps">
-          <div class="step active"><span>01</span><strong>Identificação</strong></div>
-          <div class="step"><span>02</span><strong>Serviços</strong></div>
-          <div class="step"><span>03</span><strong>Profissional</strong></div>
-          <div class="step"><span>04</span><strong>Horário</strong></div>
+          <div class="step active" data-step-indicator="1"><span>01</span><strong>Identificação</strong></div>
+          <div class="step" data-step-indicator="2"><span>02</span><strong>Serviços</strong></div>
+          <div class="step" data-step-indicator="3"><span>03</span><strong>Profissional</strong></div>
+          <div class="step" data-step-indicator="4"><span>04</span><strong>Horário</strong></div>
         </div>
       </div>
     </section>
@@ -88,6 +88,72 @@
             <span>→</span>
           </button>
         </div>
+
+        <section id="servicesStep" class="booking-step-panel hidden">
+          <div class="step-header">
+            <button id="backToIdentityBtn" class="back-btn" type="button">← VOLTAR</button>
+            <span class="eyebrow">ETAPA 2 DE 4</span>
+            <h2>Escolha seus serviços</h2>
+            <p>Você pode selecionar mais de um serviço no mesmo horário.</p>
+          </div>
+
+          <div id="servicesList" class="services-list">
+            <div class="loading-state">Carregando serviços...</div>
+          </div>
+
+          <div class="booking-summary">
+            <div>
+              <span>SERVIÇOS</span>
+              <strong id="serviceCountSummary">0 selecionados</strong>
+            </div>
+            <div>
+              <span>DURAÇÃO</span>
+              <strong id="serviceDurationSummary">0 min</strong>
+            </div>
+            <div>
+              <span>TOTAL</span>
+              <strong id="servicePriceSummary">R$ 0,00</strong>
+            </div>
+          </div>
+
+          <p id="servicesMessage" class="form-message"></p>
+
+          <button id="continueToProfessionalBtn" class="continue-btn" type="button" disabled>
+            ESCOLHER PROFISSIONAL
+            <span>→</span>
+          </button>
+        </section>
+
+        <section id="professionalStep" class="booking-step-panel hidden">
+          <div class="step-header">
+            <button id="backToServicesBtn" class="back-btn" type="button">← VOLTAR</button>
+            <span class="eyebrow">ETAPA 3 DE 4</span>
+            <h2>Com quem você prefere?</h2>
+            <p>Escolha um barbeiro ou deixe a C7 encontrar o primeiro horário disponível.</p>
+          </div>
+
+          <div id="professionalList" class="professional-list">
+            <div class="loading-state">Carregando profissionais...</div>
+          </div>
+
+          <div class="booking-summary compact">
+            <div>
+              <span>SERVIÇOS</span>
+              <strong id="professionalServiceSummary">—</strong>
+            </div>
+            <div>
+              <span>PROFISSIONAL</span>
+              <strong id="professionalChoiceSummary">Ainda não escolhido</strong>
+            </div>
+          </div>
+
+          <p id="professionalMessage" class="form-message"></p>
+
+          <button id="continueToScheduleBtn" class="continue-btn" type="button" disabled>
+            ESCOLHER DATA E HORÁRIO
+            <span>→</span>
+          </button>
+        </section>
 
         <div class="privacy-note">
           <strong>Seus dados ficam protegidos.</strong>
