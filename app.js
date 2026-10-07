@@ -14,6 +14,7 @@ let selectedServiceIds=new Set();
 let selectedProfessional="";
 let availableSlots=[];
 let selectedSlot=null;
+let accountMode="login";
 
 function formatPhone(value){
   const digits=value.replace(/\D/g,"").slice(0,11);
@@ -32,7 +33,7 @@ function setStepIndicator(step){
 }
 
 function showOnly(panelId){
-  ["customerIdentityForm","identifiedState","servicesStep","professionalStep","scheduleStep","confirmationStep"].forEach(id=>{
+  ["customerIdentityForm","identifiedState","servicesStep","professionalStep","scheduleStep","confirmationStep","customerPortalStep"].forEach(id=>{
     $(id)?.classList.add("hidden");
   });
   $(panelId)?.classList.remove("hidden");
@@ -605,6 +606,7 @@ $("customerIdentityForm")?.addEventListener("submit",async e=>{
   sessionStorage.setItem("c7_booking_customer_id",data);
   sessionStorage.setItem("c7_booking_customer_name",name);
   sessionStorage.setItem("c7_booking_customer_phone",phone);
+  sessionStorage.setItem("c7_booking_customer_email",email);
 
   showOnly("identifiedState");
   $("identifiedName").textContent=`Tudo certo, ${name.split(" ")[0]}.`;
@@ -639,6 +641,268 @@ $("confirmBookingBtn")?.addEventListener("click",confirmBooking);
 
 $("calendarBtn")?.addEventListener("click",downloadCalendarEvent);
 $("whatsappBtn")?.addEventListener("click",openBookingWhatsApp);
+
+function setAccountMode(mode){
+  accountMode=mode;
+  const creating=mode==="create";
+  $("accountLoginTab").classList.toggle("active",!creating);
+  $("accountCreateTab").classList.toggle("active",creating);
+  $("accountModalTitle").textContent=creating?"Criar minha área":"Entrar";
+  $("accountSubmitBtn").firstChild.textContent=creating?"CRIAR CONTA ":"ENTRAR ";
+  $("accountPassword").autocomplete=creating?"new-password":"current-password";
+  $("accountMessage").textContent="";
+
+  const savedEmail=sessionStorage.getItem("c7_booking_customer_email")||"";
+  if(creating&&savedEmail) $("accountEmail").value=savedEmail;
+}
+
+function openAccountModal(mode="login"){
+  $("customerAccountModal").classList.remove("hidden");
+  setAccountMode(mode);
+}
+
+function closeAccountModal(){
+  $("customerAccountModal").classList.add("hidden");
+  $("accountMessage").textContent="";
+}
+
+function portalAppointmentRow(item){
+  const date=new Date(item.starts_at);
+  const dateLabel=date.toLocaleDateString("pt-BR",{
+    day:"2-digit",month:"2-digit",year:"numeric",timeZone:"America/Sao_Paulo"
+  });
+  const timeLabel=date.toLocaleTimeString("pt-BR",{
+    hour:"2-digit",minute:"2-digit",timeZone:"America/Sao_Paulo"
+  });
+
+  return `
+    <article class="portal-appointment">
+      <div>
+        <span>${dateLabel} • ${timeLabel}</span>
+        <strong>${item.services||"Atendimento"}</strong>
+        <small>${item.professional_name||"C7"} • ${item.status}</small>
+      </div>
+      <strong>${money(item.total_amount)}</strong>
+    </article>
+  `;
+}
+
+async function loadCustomerPortal(){
+  const [{data:profile,error:profileError},{data:appointments,error:appointmentError}]=await Promise.all([
+    supabase.rpc("get_my_customer_profile"),
+    supabase.rpc("get_my_appointments")
+  ]);
+
+  if(profileError||!profile?.length){
+    openAccountModal("login");
+    $("accountMessage").textContent="Não encontramos uma Área C7 vinculada a esta conta.";
+    return false;
+  }
+
+  const customer=profile[0];
+  const rows=appointments||[];
+
+  sessionStorage.setItem("c7_booking_customer_id",customer.id);
+  sessionStorage.setItem("c7_booking_customer_name",customer.full_name||"Cliente");
+  sessionStorage.setItem("c7_booking_customer_phone",customer.phone||"");
+  sessionStorage.setItem("c7_booking_customer_email",customer.email||"");
+
+  $("portalWelcome").textContent=`Olá, ${(customer.full_name||"Cliente").split(" ")[0]}.`;
+  $("portalProfile").innerHTML=`
+    <div><span>CLIENTE</span><strong>${customer.full_name||"—"}</strong></div>
+    <div><span>WHATSAPP</span><strong>${customer.phone||"—"}</strong></div>
+    <div><span>E-MAIL</span><strong>${customer.email||"—"}</strong></div>
+    <div><span>BARBEIRO PREFERIDO</span><strong>${customer.preferred_professional_name||"Ainda não definido"}</strong></div>
+  `;
+
+  const now=new Date();
+  const upcoming=rows.filter(item=>
+    new Date(item.starts_at)>=now &&
+    ["scheduled","confirmed","waiting","in_service"].includes(item.status)
+  );
+  const history=rows.filter(item=>!upcoming.some(next=>next.id===item.id));
+
+  $("portalUpcomingList").innerHTML=upcoming.length
+    ?upcoming.map(portalAppointmentRow).join("")
+    :'<div class="loading-state">Nenhum próximo agendamento.</div>';
+
+  $("portalHistoryList").innerHTML=history.length
+    ?history.slice(0,20).map(portalAppointmentRow).join("")
+    :'<div class="loading-state">Seu histórico aparecerá aqui.</div>';
+
+  if(appointmentError){
+    $("portalHistoryList").innerHTML='<div class="loading-state error">Não foi possível carregar o histórico.</div>';
+  }
+
+  closeAccountModal();
+  showOnly("customerPortalStep");
+  document.querySelectorAll("[data-step-indicator]").forEach(el=>{
+    el.classList.remove("active","done");
+  });
+  return true;
+}
+
+async function linkPendingCustomer(){
+  const pending=localStorage.getItem("c7_pending_customer_link") ||
+    sessionStorage.getItem("c7_booking_customer_id");
+
+  if(!pending) return true;
+
+  const {error}=await supabase.rpc("link_current_user_to_customer",{
+    p_customer_id:pending
+  });
+
+  if(error){
+    const message=String(error.message||"");
+    if(message.includes("já possui uma conta")){
+      localStorage.removeItem("c7_pending_customer_link");
+      return true;
+    }
+    return false;
+  }
+
+  localStorage.removeItem("c7_pending_customer_link");
+  return true;
+}
+
+async function openPortalOrLogin(){
+  const {data:{session}}=await supabase.auth.getSession();
+  if(session){
+    const loaded=await loadCustomerPortal();
+    if(loaded) return;
+  }
+  openAccountModal("login");
+}
+
+$("openCustomerAreaBtn")?.addEventListener("click",openPortalOrLogin);
+$("createCustomerAreaBtn")?.addEventListener("click",()=>openAccountModal("create"));
+$("accountLoginTab")?.addEventListener("click",()=>setAccountMode("login"));
+$("accountCreateTab")?.addEventListener("click",()=>setAccountMode("create"));
+
+document.querySelectorAll("[data-close-customer-account]").forEach(el=>{
+  el.addEventListener("click",closeAccountModal);
+});
+
+$("customerAccountForm")?.addEventListener("submit",async e=>{
+  e.preventDefault();
+
+  const email=$("accountEmail").value.trim().toLowerCase();
+  const password=$("accountPassword").value;
+
+  if(password.length<8){
+    $("accountMessage").textContent="A senha precisa ter pelo menos 8 caracteres.";
+    return;
+  }
+
+  $("accountSubmitBtn").disabled=true;
+  $("accountMessage").textContent=accountMode==="create"
+    ?"Criando sua Área C7..."
+    :"Entrando...";
+
+  if(accountMode==="create"){
+    const customerId=sessionStorage.getItem("c7_booking_customer_id");
+    const appointmentId=sessionStorage.getItem("c7_booking_appointment_id");
+
+    if(!customerId||!appointmentId){
+      $("accountSubmitBtn").disabled=false;
+      $("accountMessage").textContent="Para criar sua conta agora, finalize primeiro um agendamento.";
+      return;
+    }
+
+    const {error:prepareError}=await supabase.rpc("prepare_customer_portal_email",{
+      p_customer_id:customerId,
+      p_appointment_id:appointmentId,
+      p_email:email
+    });
+
+    if(prepareError){
+      $("accountSubmitBtn").disabled=false;
+      $("accountMessage").textContent=String(prepareError.message||"").includes("outro e-mail")
+        ?"Este cliente já possui outro e-mail cadastrado."
+        :"Não foi possível preparar sua conta.";
+      return;
+    }
+
+    localStorage.setItem("c7_pending_customer_link",customerId);
+
+    const {data,error}=await supabase.auth.signUp({
+      email,
+      password,
+      options:{data:{account_type:"customer"}}
+    });
+
+    if(error){
+      $("accountSubmitBtn").disabled=false;
+      $("accountMessage").textContent=String(error.message||"").toLowerCase().includes("already")
+        ?"Este e-mail já possui uma conta. Use Entrar."
+        :"Não foi possível criar a conta.";
+      return;
+    }
+
+    if(data.session){
+      const linked=await linkPendingCustomer();
+      $("accountSubmitBtn").disabled=false;
+      if(linked) await loadCustomerPortal();
+      else $("accountMessage").textContent="Conta criada, mas não foi possível vinculá-la ao cliente.";
+      return;
+    }
+
+    $("accountSubmitBtn").disabled=false;
+    $("accountMessage").textContent="Conta criada. Confirme o e-mail recebido e depois entre na sua Área C7.";
+    setAccountMode("login");
+    $("accountEmail").value=email;
+    return;
+  }
+
+  const {error}=await supabase.auth.signInWithPassword({email,password});
+
+  if(error){
+    $("accountSubmitBtn").disabled=false;
+    $("accountMessage").textContent="E-mail ou senha incorretos.";
+    return;
+  }
+
+  const linked=await linkPendingCustomer();
+  $("accountSubmitBtn").disabled=false;
+
+  if(!linked){
+    $("accountMessage").textContent="Entramos na conta, mas ela não corresponde ao cliente deste agendamento.";
+    return;
+  }
+
+  await loadCustomerPortal();
+});
+
+$("backFromPortalBtn")?.addEventListener("click",()=>{
+  const name=sessionStorage.getItem("c7_booking_customer_name");
+  if(name){
+    showOnly("identifiedState");
+    $("identifiedName").textContent=`Tudo certo, ${name.split(" ")[0]}.`;
+    setStepIndicator(1);
+  }else{
+    showOnly("customerIdentityForm");
+    setStepIndicator(1);
+  }
+});
+
+$("portalNewBookingBtn")?.addEventListener("click",async()=>{
+  selectedServiceIds=new Set();
+  selectedProfessional="";
+  selectedSlot=null;
+  availableSlots=[];
+  sessionStorage.removeItem("c7_booking_service_ids");
+  sessionStorage.removeItem("c7_booking_professional_id");
+  sessionStorage.removeItem("c7_booking_professional_name");
+  sessionStorage.removeItem("c7_booking_appointment_id");
+  await goToServices();
+});
+
+$("portalLogoutBtn")?.addEventListener("click",async()=>{
+  await supabase.auth.signOut();
+  showOnly("customerIdentityForm");
+  setStepIndicator(1);
+});
+
 
 $("newBookingBtn")?.addEventListener("click",async()=>{
   selectedServiceIds=new Set();
