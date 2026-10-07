@@ -292,6 +292,77 @@ function formatTimePt(value){
   });
 }
 
+function bookingDurationMinutes(){
+  return selectedServices().reduce((sum,item)=>sum+Number(item.duration_minutes||0),0);
+}
+
+function toIcsDate(date){
+  const pad=n=>String(n).padStart(2,"0");
+  return date.getUTCFullYear()+
+    pad(date.getUTCMonth()+1)+
+    pad(date.getUTCDate())+"T"+
+    pad(date.getUTCHours())+
+    pad(date.getUTCMinutes())+
+    pad(date.getUTCSeconds())+"Z";
+}
+
+function downloadCalendarEvent(){
+  if(!selectedSlot) return;
+
+  const starts=new Date(selectedSlot.starts_at);
+  const ends=new Date(starts.getTime()+bookingDurationMinutes()*60000);
+  const serviceNames=selectedServices().map(item=>item.name).join(" + ");
+  const title=`C7 Barbearia — ${serviceNames}`;
+  const description=`Agendamento com ${selectedSlot.professional_name} na C7 Barbearia Tradicional.`;
+
+  const content=[
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//C7 Barbearia//Agendamento//PT-BR",
+    "BEGIN:VEVENT",
+    `UID:${sessionStorage.getItem("c7_booking_appointment_id")||Date.now()}@c7barbearia`,
+    `DTSTAMP:${toIcsDate(new Date())}`,
+    `DTSTART:${toIcsDate(starts)}`,
+    `DTEND:${toIcsDate(ends)}`,
+    `SUMMARY:${title.replace(/\n/g," ")}`,
+    `DESCRIPTION:${description.replace(/\n/g," ")}`,
+    "END:VEVENT",
+    "END:VCALENDAR"
+  ].join("\r\n");
+
+  const blob=new Blob([content],{type:"text/calendar;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="agendamento-c7.ics";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function openBookingWhatsApp(){
+  if(!selectedSlot) return;
+
+  const name=sessionStorage.getItem("c7_booking_customer_name")||"Cliente";
+  const date=$("bookingDate").value;
+  const time=formatTimePt(selectedSlot.starts_at);
+  const servicesText=selectedServices().map(item=>item.name).join(" + ");
+  const message=[
+    `Olá! Sou ${name}.`,
+    "Acabei de fazer um agendamento pelo site da C7.",
+    `Data: ${formatDatePt(date)} às ${time}`,
+    `Profissional: ${selectedSlot.professional_name}`,
+    `Serviços: ${servicesText}`
+  ].join("\n");
+
+  window.open(
+    `https://wa.me/5562992390887?text=${encodeURIComponent(message)}`,
+    "_blank",
+    "noopener,noreferrer"
+  );
+}
+
 function renderSlots(){
   const target=$("slotsList");
   target.replaceChildren();
@@ -467,6 +538,10 @@ async function confirmBooking(){
   $("confirmationTime").textContent=formatTimePt(selectedSlot.starts_at);
   $("confirmationProfessional").textContent=selectedSlot.professional_name;
   $("confirmationServices").textContent=serviceNames;
+  $("confirmationDuration").textContent=`${bookingDurationMinutes()} min`;
+  $("confirmationTotal").textContent=money(
+    selectedServices().reduce((sum,item)=>sum+Number(item.price||0),0)
+  );
 
   showOnly("confirmationStep");
   document.querySelectorAll("[data-step-indicator]").forEach(el=>{
@@ -561,6 +636,9 @@ $("backToProfessionalBtn")?.addEventListener("click",()=>{
 
 $("bookingDate")?.addEventListener("change",loadSlots);
 $("confirmBookingBtn")?.addEventListener("click",confirmBooking);
+
+$("calendarBtn")?.addEventListener("click",downloadCalendarEvent);
+$("whatsappBtn")?.addEventListener("click",openBookingWhatsApp);
 
 $("newBookingBtn")?.addEventListener("click",async()=>{
   selectedServiceIds=new Set();
