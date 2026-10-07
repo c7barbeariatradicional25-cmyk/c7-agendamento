@@ -1159,3 +1159,94 @@ button{cursor:pointer}
   .customer-login-entry{grid-template-columns:1fr}
   .customer-area-login-btn{width:100%;justify-content:space-between}
 }
+
+/* FOTO DE PERFIL — ÁREA C7 */
+.customer-avatar-editor{
+  display:grid;
+  grid-template-columns:86px 1fr;
+  gap:16px;
+  align-items:center;
+  padding:14px;
+  border:1px solid #e2d4c8;
+  border-radius:14px;
+  background:#fbf5ef;
+}
+.customer-avatar-preview,
+.customer-avatar-display{
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border-radius:50%;
+  background:linear-gradient(145deg,#2b211a,#6a4a34);
+  color:#fff;
+  font:700 24px Oswald,sans-serif;
+  letter-spacing:.5px;
+}
+.customer-avatar-preview{
+  width:76px;
+  height:76px;
+  border:3px solid #fff;
+  box-shadow:0 8px 22px rgba(64,42,27,.15);
+}
+.customer-avatar-display{
+  width:58px;
+  height:58px;
+  flex:0 0 58px;
+  border:2px solid #fff;
+  box-shadow:0 6px 18px rgba(64,42,27,.14);
+}
+.customer-avatar-preview img,
+.customer-avatar-display img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.customer-avatar-upload{
+  display:grid!important;
+  gap:6px!important;
+}
+.customer-avatar-upload>span{
+  margin:0!important;
+  font-size:10px!important;
+  font-weight:800!important;
+  color:#5c4b3e!important;
+}
+.customer-avatar-upload input[type="file"]{
+  width:100%;
+  padding:8px;
+  border:1px solid #ddcdbf;
+  border-radius:10px;
+  background:#fff;
+  color:#6a584b;
+  font-size:9px;
+}
+.customer-avatar-upload small{
+  font-size:8px;
+  line-height:1.4;
+  color:#99887a;
+}
+.portal-profile-identity{
+  display:flex!important;
+  align-items:center;
+  gap:12px;
+}
+.portal-profile-identity>div:last-child{
+  min-width:0;
+}
+.portal-profile-identity small{
+  display:block;
+  margin-top:3px;
+  color:#9b8b7e;
+  font-size:8px;
+}
+@media(max-width:560px){
+  .customer-avatar-editor{
+    grid-template-columns:1fr;
+    justify-items:center;
+    text-align:center;
+  }
+  .customer-avatar-upload{
+    width:100%;
+    text-align:left;
+  }
+}
