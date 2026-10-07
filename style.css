@@ -1057,3 +1057,42 @@ button{cursor:pointer}
     grid-template-columns:1fr;
   }
 }
+
+
+/* CONFIGURAÇÕES DA CONTA */
+.portal-account-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.portal-account-actions .secondary-action-btn{
+  width:100%;
+}
+.forgot-password-btn{
+  width:max-content;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:#8a6043;
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.5px;
+  text-align:left;
+}
+.forgot-password-btn:hover{
+  text-decoration:underline;
+}
+#profileEmail[readonly]{
+  background:#f3eee8;
+  color:#7e7166;
+}
+#profileSettingsModal .account-card,
+#passwordModal .account-card{
+  max-height:min(88vh,720px);
+  overflow:auto;
+}
+@media(max-width:560px){
+  .portal-account-actions{
+    grid-template-columns:1fr;
+  }
+}
