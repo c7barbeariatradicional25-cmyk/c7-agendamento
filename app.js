@@ -9,6 +9,19 @@ const $=id=>document.getElementById(id);
 const money=value=>new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(Number(value||0));
 const CUSTOMER_PORTAL_URL="https://agendamento.c7barbeariatradicional.com.br/";
 
+function renderCustomerAvatar(target,url,name="C7"){
+  if(!target) return;
+  target.replaceChildren();
+  if(url){
+    const img=document.createElement("img");
+    img.src=url;
+    img.alt=name||"Cliente C7";
+    target.appendChild(img);
+    return;
+  }
+  target.textContent=(name||"C7").split(" ").map(x=>x[0]).join("").slice(0,2).toUpperCase();
+}
+
 let services=[];
 let professionals=[];
 let selectedServiceIds=new Set();
@@ -715,12 +728,14 @@ async function loadCustomerPortal(){
     {data:profile,error:profileError},
     {data:appointments,error:appointmentError},
     {data:benefits,error:benefitsError},
-    {data:preferences,error:preferencesError}
+    {data:preferences,error:preferencesError},
+    {data:avatarUrl}
   ]=await Promise.all([
     supabase.rpc("get_my_customer_profile"),
     supabase.rpc("get_my_appointments"),
     supabase.rpc("get_my_benefits"),
-    supabase.rpc("get_my_consumption_preferences")
+    supabase.rpc("get_my_consumption_preferences"),
+    supabase.rpc("get_my_avatar_url")
   ]);
 
   if(profileError||!profile?.length){
@@ -740,11 +755,19 @@ async function loadCustomerPortal(){
 
   $("portalWelcome").textContent=`Olá, ${(customer.full_name||"Cliente").split(" ")[0]}.`;
   $("portalProfile").innerHTML=`
-    <div><span>CLIENTE</span><strong>${customer.full_name||"—"}</strong></div>
+    <div class="portal-profile-identity">
+      <div id="portalAvatar" class="customer-avatar-display"></div>
+      <div>
+        <span>CLIENTE</span>
+        <strong>${customer.full_name||"—"}</strong>
+        <small>Perfil C7</small>
+      </div>
+    </div>
     <div><span>WHATSAPP</span><strong>${customer.phone||"—"}</strong></div>
     <div><span>E-MAIL</span><strong>${customer.email||"—"}</strong></div>
     <div><span>BARBEIRO PREFERIDO</span><strong>${customer.preferred_professional_name||"Ainda não definido"}</strong></div>
   `;
+  renderCustomerAvatar($("portalAvatar"),avatarUrl,customer.full_name);
 
   const benefitRows=benefits||[];
   if($("portalBenefitsList")){
@@ -1014,7 +1037,13 @@ function closeProfileSettings(){
 }
 
 async function openProfileSettings(){
-  const {data,error}=await supabase.rpc("get_my_account_details");
+  const [
+    {data,error},
+    {data:avatarUrl}
+  ]=await Promise.all([
+    supabase.rpc("get_my_account_details"),
+    supabase.rpc("get_my_avatar_url")
+  ]);
 
   if(error||!data?.length){
     alert("Não foi possível carregar seus dados.");
@@ -1027,6 +1056,8 @@ async function openProfileSettings(){
   $("profileBirthDate").value=profile.birth_date||"";
   $("profileMarketingOptIn").checked=Boolean(profile.marketing_opt_in);
   $("profileEmail").value=profile.email||"";
+  $("profileAvatarFile").value="";
+  renderCustomerAvatar($("profileAvatarPreview"),avatarUrl,profile.full_name);
   $("profileSettingsMessage").textContent="";
   $("profileSettingsModal").classList.remove("hidden");
 }
@@ -1045,6 +1076,18 @@ function openPasswordModal(){
 
 $("profilePhone")?.addEventListener("input",e=>{
   e.target.value=formatPhone(e.target.value);
+});
+
+$("profileAvatarFile")?.addEventListener("change",()=>{
+  const file=$("profileAvatarFile").files?.[0];
+  if(!file) return;
+  if(file.size>5*1024*1024){
+    $("profileSettingsMessage").textContent="A foto deve ter no máximo 5 MB.";
+    $("profileAvatarFile").value="";
+    return;
+  }
+  const url=URL.createObjectURL(file);
+  renderCustomerAvatar($("profileAvatarPreview"),url,$("profileFullName").value||"Cliente C7");
 });
 
 $("editProfileBtn")?.addEventListener("click",openProfileSettings);
@@ -1093,6 +1136,44 @@ $("profileSettingsForm")?.addEventListener("submit",async e=>{
           ?"Informe um WhatsApp válido."
           :"Não foi possível salvar seus dados.";
     return;
+  }
+
+  const avatarFile=$("profileAvatarFile").files?.[0];
+
+  if(avatarFile){
+    $("profileSettingsMessage").textContent="Enviando sua foto...";
+
+    const {data:{session}}=await supabase.auth.getSession();
+    const userId=session?.user?.id;
+
+    if(!userId){
+      $("profileSettingsMessage").textContent="Sua sessão expirou. Entre novamente.";
+      return;
+    }
+
+    const ext=(avatarFile.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+    const path=`customer-avatars/${userId}/avatar-${Date.now()}.${ext}`;
+
+    const {error:uploadError}=await supabase.storage
+      .from("c7-assets")
+      .upload(path,avatarFile,{cacheControl:"3600",upsert:false});
+
+    if(uploadError){
+      $("profileSettingsMessage").textContent="Seus dados foram salvos, mas não foi possível enviar a foto.";
+      return;
+    }
+
+    const {data:publicUrlData}=supabase.storage.from("c7-assets").getPublicUrl(path);
+    const avatarUrl=publicUrlData?.publicUrl;
+
+    const {error:avatarError}=await supabase.rpc("set_my_avatar_url",{
+      p_avatar_url:avatarUrl
+    });
+
+    if(avatarError){
+      $("profileSettingsMessage").textContent="Seus dados foram salvos, mas não foi possível vincular a foto.";
+      return;
+    }
   }
 
   sessionStorage.setItem("c7_booking_customer_name",name);
