@@ -15,6 +15,10 @@ let selectedProfessional="";
 let availableSlots=[];
 let selectedSlot=null;
 let accountMode="login";
+let portalAppointments=[];
+let rescheduleTarget=null;
+let rescheduleSlots=[];
+let rescheduleSelectedSlot=null;
 
 function formatPhone(value){
   const digits=value.replace(/\D/g,"").slice(0,11);
@@ -666,7 +670,7 @@ function closeAccountModal(){
   $("accountMessage").textContent="";
 }
 
-function portalAppointmentRow(item){
+function portalAppointmentRow(item,interactive=false){
   const date=new Date(item.starts_at);
   const dateLabel=date.toLocaleDateString("pt-BR",{
     day:"2-digit",month:"2-digit",year:"numeric",timeZone:"America/Sao_Paulo"
@@ -675,12 +679,30 @@ function portalAppointmentRow(item){
     hour:"2-digit",minute:"2-digit",timeZone:"America/Sao_Paulo"
   });
 
+  const statusLabels={
+    scheduled:"Agendado",
+    confirmed:"Confirmado",
+    waiting:"Aguardando",
+    in_service:"Em atendimento",
+    completed:"Concluído",
+    cancelled:"Cancelado",
+    no_show:"Não compareceu"
+  };
+
+  const canManage=interactive&&["scheduled","confirmed"].includes(item.status)&&date>new Date();
+
   return `
     <article class="portal-appointment">
-      <div>
+      <div class="portal-appointment-main">
         <span>${dateLabel} • ${timeLabel}</span>
         <strong>${item.services||"Atendimento"}</strong>
-        <small>${item.professional_name||"C7"} • ${item.status}</small>
+        <small>${item.professional_name||"C7"} • ${statusLabels[item.status]||item.status}</small>
+        ${canManage?`
+          <div class="portal-appointment-actions">
+            <button type="button" data-reschedule-appointment="${item.id}">REAGENDAR</button>
+            <button type="button" class="danger" data-cancel-appointment="${item.id}">CANCELAR</button>
+          </div>
+        `:""}
       </div>
       <strong>${money(item.total_amount)}</strong>
     </article>
@@ -701,6 +723,7 @@ async function loadCustomerPortal(){
 
   const customer=profile[0];
   const rows=appointments||[];
+  portalAppointments=rows;
 
   sessionStorage.setItem("c7_booking_customer_id",customer.id);
   sessionStorage.setItem("c7_booking_customer_name",customer.full_name||"Cliente");
@@ -723,7 +746,7 @@ async function loadCustomerPortal(){
   const history=rows.filter(item=>!upcoming.some(next=>next.id===item.id));
 
   $("portalUpcomingList").innerHTML=upcoming.length
-    ?upcoming.map(portalAppointmentRow).join("")
+    ?upcoming.map(item=>portalAppointmentRow(item,true)).join("")
     :'<div class="loading-state">Nenhum próximo agendamento.</div>';
 
   $("portalHistoryList").innerHTML=history.length
@@ -734,6 +757,7 @@ async function loadCustomerPortal(){
     $("portalHistoryList").innerHTML='<div class="loading-state error">Não foi possível carregar o histórico.</div>';
   }
 
+  bindPortalAppointmentActions();
   closeAccountModal();
   showOnly("customerPortalStep");
   document.querySelectorAll("[data-step-indicator]").forEach(el=>{
@@ -741,6 +765,169 @@ async function loadCustomerPortal(){
   });
   return true;
 }
+
+
+function closeRescheduleModal(){
+  $("rescheduleModal")?.classList.add("hidden");
+  rescheduleTarget=null;
+  rescheduleSlots=[];
+  rescheduleSelectedSlot=null;
+}
+
+function renderRescheduleSlots(){
+  const target=$("rescheduleSlots");
+  target.replaceChildren();
+
+  if(!rescheduleSlots.length){
+    target.innerHTML='<div class="loading-state">Nenhum horário disponível nesta data.</div>';
+    $("confirmRescheduleBtn").disabled=true;
+    return;
+  }
+
+  const grid=document.createElement("div");
+  grid.className="slot-grid";
+
+  rescheduleSlots.forEach(slot=>{
+    const btn=document.createElement("button");
+    btn.type="button";
+    btn.className="slot-btn"+(
+      rescheduleSelectedSlot?.starts_at===slot.starts_at?" selected":""
+    );
+
+    const strong=document.createElement("strong");
+    strong.textContent=formatTimePt(slot.starts_at);
+    btn.appendChild(strong);
+
+    btn.addEventListener("click",()=>{
+      rescheduleSelectedSlot=slot;
+      renderRescheduleSlots();
+      $("confirmRescheduleBtn").disabled=false;
+    });
+
+    grid.appendChild(btn);
+  });
+
+  target.appendChild(grid);
+}
+
+async function loadRescheduleSlots(){
+  if(!rescheduleTarget) return;
+
+  const date=$("rescheduleDate").value;
+  rescheduleSelectedSlot=null;
+  $("confirmRescheduleBtn").disabled=true;
+
+  if(!date){
+    $("rescheduleSlots").innerHTML='<div class="loading-state">Escolha uma data.</div>';
+    return;
+  }
+
+  $("rescheduleSlots").innerHTML='<div class="loading-state">Buscando horários...</div>';
+  $("rescheduleMessage").textContent="";
+
+  const {data,error}=await supabase.rpc("get_my_reschedule_slots",{
+    p_appointment_id:rescheduleTarget.id,
+    p_date:date
+  });
+
+  if(error){
+    $("rescheduleSlots").innerHTML='<div class="loading-state error">Não foi possível carregar os horários.</div>';
+    return;
+  }
+
+  rescheduleSlots=data||[];
+  renderRescheduleSlots();
+}
+
+async function openRescheduleModal(item){
+  rescheduleTarget=item;
+  rescheduleSlots=[];
+  rescheduleSelectedSlot=null;
+
+  $("rescheduleServiceName").textContent=item.services||"Atendimento";
+  $("rescheduleProfessionalName").textContent=item.professional_name||"C7";
+  $("rescheduleMessage").textContent="";
+  $("confirmRescheduleBtn").disabled=true;
+
+  const today=new Date();
+  const max=new Date();
+  max.setDate(max.getDate()+30);
+
+  $("rescheduleDate").min=localDateInput(today);
+  $("rescheduleDate").max=localDateInput(max);
+  $("rescheduleDate").value=localDateInput(new Date(item.starts_at));
+
+  $("rescheduleModal").classList.remove("hidden");
+  await loadRescheduleSlots();
+}
+
+async function cancelPortalAppointment(item){
+  const date=new Date(item.starts_at).toLocaleString("pt-BR",{
+    day:"2-digit",month:"2-digit",year:"numeric",
+    hour:"2-digit",minute:"2-digit",
+    timeZone:"America/Sao_Paulo"
+  });
+
+  if(!confirm(`Cancelar o agendamento de ${date}?\n${item.services||"Atendimento"}`)) return;
+
+  const {error}=await supabase.rpc("cancel_my_appointment",{
+    p_appointment_id:item.id
+  });
+
+  if(error){
+    alert("Não foi possível cancelar este agendamento.");
+    return;
+  }
+
+  await loadCustomerPortal();
+}
+
+function bindPortalAppointmentActions(){
+  document.querySelectorAll("[data-reschedule-appointment]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const item=portalAppointments.find(x=>x.id===btn.dataset.rescheduleAppointment);
+      if(item) openRescheduleModal(item);
+    });
+  });
+
+  document.querySelectorAll("[data-cancel-appointment]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const item=portalAppointments.find(x=>x.id===btn.dataset.cancelAppointment);
+      if(item) cancelPortalAppointment(item);
+    });
+  });
+}
+
+document.querySelectorAll("[data-close-reschedule]").forEach(el=>{
+  el.addEventListener("click",closeRescheduleModal);
+});
+
+$("rescheduleDate")?.addEventListener("change",loadRescheduleSlots);
+
+$("confirmRescheduleBtn")?.addEventListener("click",async()=>{
+  if(!rescheduleTarget||!rescheduleSelectedSlot) return;
+
+  $("confirmRescheduleBtn").disabled=true;
+  $("rescheduleMessage").textContent="Salvando novo horário...";
+
+  const {error}=await supabase.rpc("reschedule_my_appointment",{
+    p_appointment_id:rescheduleTarget.id,
+    p_starts_at:rescheduleSelectedSlot.starts_at
+  });
+
+  if(error){
+    const message=String(error.message||"");
+    $("rescheduleMessage").textContent=
+      message.includes("não está mais disponível")
+        ?"Esse horário acabou de ser ocupado. Escolha outro."
+        :"Não foi possível reagendar.";
+    await loadRescheduleSlots();
+    return;
+  }
+
+  closeRescheduleModal();
+  await loadCustomerPortal();
+});
 
 async function linkPendingCustomer(){
   const pending=localStorage.getItem("c7_pending_customer_link") ||
