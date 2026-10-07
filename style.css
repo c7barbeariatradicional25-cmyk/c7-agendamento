@@ -1014,3 +1014,46 @@ button{cursor:pointer}
     grid-template-columns:1fr;
   }
 }
+
+
+/* PREFERÊNCIAS DO CLIENTE */
+.preference-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.preference-grid article{
+  min-width:0;
+  padding:12px;
+  border:1px solid #e0d3c7;
+  border-radius:12px;
+  background:#fff;
+}
+.preference-grid span{
+  display:block;
+  color:#91755d;
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:.55px;
+}
+.preference-grid strong{
+  display:block;
+  margin-top:6px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#34271f;
+  font-size:10px;
+}
+.preference-grid small{
+  display:block;
+  margin-top:4px;
+  color:#8d7d70;
+  font-size:8px;
+}
+
+@media(max-width:560px){
+  .preference-grid{
+    grid-template-columns:1fr;
+  }
+}
