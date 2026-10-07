@@ -12,6 +12,8 @@ let services=[];
 let professionals=[];
 let selectedServiceIds=new Set();
 let selectedProfessional="";
+let availableSlots=[];
+let selectedSlot=null;
 
 function formatPhone(value){
   const digits=value.replace(/\D/g,"").slice(0,11);
@@ -30,7 +32,7 @@ function setStepIndicator(step){
 }
 
 function showOnly(panelId){
-  ["customerIdentityForm","identifiedState","servicesStep","professionalStep"].forEach(id=>{
+  ["customerIdentityForm","identifiedState","servicesStep","professionalStep","scheduleStep","confirmationStep"].forEach(id=>{
     $(id)?.classList.add("hidden");
   });
   $(panelId)?.classList.remove("hidden");
@@ -269,6 +271,211 @@ async function goToProfessionals(){
   await loadProfessionals();
 }
 
+
+function localDateInput(date){
+  const y=date.getFullYear();
+  const m=String(date.getMonth()+1).padStart(2,"0");
+  const d=String(date.getDate()).padStart(2,"0");
+  return `${y}-${m}-${d}`;
+}
+
+function formatDatePt(value){
+  if(!value) return "—";
+  return new Date(value+"T12:00:00").toLocaleDateString("pt-BR",{
+    weekday:"short",day:"2-digit",month:"2-digit"
+  });
+}
+
+function formatTimePt(value){
+  return new Date(value).toLocaleTimeString("pt-BR",{
+    hour:"2-digit",minute:"2-digit",timeZone:"America/Sao_Paulo"
+  });
+}
+
+function renderSlots(){
+  const target=$("slotsList");
+  target.replaceChildren();
+
+  if(!availableSlots.length){
+    target.innerHTML='<div class="loading-state">Nenhum horário disponível nesta data.</div>';
+    return;
+  }
+
+  const groups={manha:[],tarde:[],noite:[]};
+  availableSlots.forEach(slot=>{
+    const hour=Number(formatTimePt(slot.starts_at).slice(0,2));
+    if(hour<12) groups.manha.push(slot);
+    else if(hour<18) groups.tarde.push(slot);
+    else groups.noite.push(slot);
+  });
+
+  const labels={manha:"Manhã",tarde:"Tarde",noite:"Noite"};
+
+  Object.entries(groups).forEach(([key,items])=>{
+    if(!items.length) return;
+
+    const section=document.createElement("section");
+    section.className="slot-period";
+
+    const title=document.createElement("h3");
+    title.textContent=labels[key];
+
+    const grid=document.createElement("div");
+    grid.className="slot-grid";
+
+    items.forEach(slot=>{
+      const active=selectedSlot?.starts_at===slot.starts_at &&
+        selectedSlot?.professional_id===slot.professional_id;
+
+      const btn=document.createElement("button");
+      btn.type="button";
+      btn.className="slot-btn"+(active?" selected":"");
+
+      const time=document.createElement("strong");
+      time.textContent=formatTimePt(slot.starts_at);
+      btn.appendChild(time);
+
+      if(selectedProfessional==="any"){
+        const pro=document.createElement("span");
+        pro.textContent=slot.professional_name;
+        btn.appendChild(pro);
+      }
+
+      btn.addEventListener("click",()=>{
+        selectedSlot=slot;
+        renderSlots();
+        updateScheduleSummary();
+      });
+
+      grid.appendChild(btn);
+    });
+
+    section.append(title,grid);
+    target.appendChild(section);
+  });
+}
+
+function updateScheduleSummary(){
+  const totalPrice=selectedServices().reduce((sum,item)=>sum+Number(item.price||0),0);
+  $("scheduleDateSummary").textContent=formatDatePt($("bookingDate").value);
+  $("scheduleTimeSummary").textContent=selectedSlot?formatTimePt(selectedSlot.starts_at):"—";
+  $("schedulePriceSummary").textContent=money(totalPrice);
+  $("confirmBookingBtn").disabled=!selectedSlot;
+}
+
+async function loadSlots(){
+  const date=$("bookingDate").value;
+  selectedSlot=null;
+  updateScheduleSummary();
+
+  if(!date){
+    $("slotsList").innerHTML='<div class="loading-state">Escolha uma data para ver os horários.</div>';
+    return;
+  }
+
+  $("slotsList").innerHTML='<div class="loading-state">Buscando horários disponíveis...</div>';
+  $("scheduleMessage").textContent="";
+
+  const serviceIds=[...selectedServiceIds].map(Number);
+  const professionalId=selectedProfessional==="any"?null:selectedProfessional;
+
+  const {data,error}=await supabase.rpc("get_booking_slots",{
+    p_date:date,
+    p_service_ids:serviceIds,
+    p_professional_id:professionalId
+  });
+
+  if(error){
+    $("slotsList").innerHTML='<div class="loading-state error">Não foi possível carregar os horários.</div>';
+    return;
+  }
+
+  availableSlots=data||[];
+  renderSlots();
+}
+
+async function goToSchedule(){
+  if(!selectedProfessional){
+    $("professionalMessage").textContent="Escolha um profissional ou a opção de qualquer disponível.";
+    return;
+  }
+
+  $("professionalMessage").textContent="";
+  showOnly("scheduleStep");
+  setStepIndicator(4);
+
+  const professionalName=selectedProfessional==="any"
+    ?"Qualquer disponível"
+    :(professionals.find(p=>p.id===selectedProfessional)?.full_name||"Profissional");
+
+  sessionStorage.setItem("c7_booking_professional_name",professionalName);
+  $("selectedBookingProfessional").querySelector("strong").textContent=professionalName;
+
+  const today=new Date();
+  const maxDate=new Date();
+  maxDate.setDate(maxDate.getDate()+30);
+
+  $("bookingDate").min=localDateInput(today);
+  $("bookingDate").max=localDateInput(maxDate);
+
+  if(!$("bookingDate").value){
+    $("bookingDate").value=localDateInput(today);
+  }
+
+  updateScheduleSummary();
+  await loadSlots();
+}
+
+async function confirmBooking(){
+  if(!selectedSlot) return;
+
+  const customerId=sessionStorage.getItem("c7_booking_customer_id");
+  if(!customerId){
+    $("scheduleMessage").textContent="Seu cadastro expirou. Volte para a identificação.";
+    return;
+  }
+
+  $("confirmBookingBtn").disabled=true;
+  $("scheduleMessage").textContent="Confirmando seu horário...";
+
+  const {data,error}=await supabase.rpc("create_public_booking",{
+    p_customer_id:customerId,
+    p_professional_id:selectedSlot.professional_id,
+    p_service_ids:[...selectedServiceIds].map(Number),
+    p_starts_at:selectedSlot.starts_at
+  });
+
+  if(error){
+    const message=String(error.message||"");
+    $("confirmBookingBtn").disabled=false;
+    $("scheduleMessage").textContent=
+      message.includes("não está mais disponível")?"Esse horário acabou de ser ocupado. Escolha outro.":
+      message.includes("bloqueado")?"Esse horário não está mais disponível.":
+      "Não foi possível confirmar agora. Tente novamente.";
+    await loadSlots();
+    return;
+  }
+
+  sessionStorage.setItem("c7_booking_appointment_id",data);
+
+  const serviceNames=selectedServices().map(item=>item.name).join(" + ");
+  const customerName=sessionStorage.getItem("c7_booking_customer_name")||"Cliente";
+
+  $("confirmationTitle").textContent=`Pronto, ${customerName.split(" ")[0]}.`;
+  $("confirmationText").textContent="Seu horário já entrou na agenda da C7.";
+  $("confirmationDate").textContent=formatDatePt($("bookingDate").value);
+  $("confirmationTime").textContent=formatTimePt(selectedSlot.starts_at);
+  $("confirmationProfessional").textContent=selectedSlot.professional_name;
+  $("confirmationServices").textContent=serviceNames;
+
+  showOnly("confirmationStep");
+  document.querySelectorAll("[data-step-indicator]").forEach(el=>{
+    el.classList.remove("active");
+    el.classList.add("done");
+  });
+}
+
+
 $("customerPhone")?.addEventListener("input",e=>{
   e.target.value=formatPhone(e.target.value);
 });
@@ -343,22 +550,28 @@ $("backToServicesBtn")?.addEventListener("click",()=>{
   renderServices();
 });
 
-$("continueToScheduleBtn")?.addEventListener("click",()=>{
-  if(!selectedProfessional){
-    $("professionalMessage").textContent="Escolha um profissional ou a opção de qualquer disponível.";
-    return;
-  }
+$("continueToScheduleBtn")?.addEventListener("click",goToSchedule);
 
-  $("professionalMessage").textContent="";
-  setStepIndicator(4);
+$("backToProfessionalBtn")?.addEventListener("click",()=>{
+  showOnly("professionalStep");
+  setStepIndicator(3);
+  renderProfessionals();
+  updateProfessionalSummary();
+});
 
-  const professionalName=selectedProfessional==="any"
-    ?"Qualquer profissional disponível"
-    :(professionals.find(p=>p.id===selectedProfessional)?.full_name||"Profissional");
+$("bookingDate")?.addEventListener("change",loadSlots);
+$("confirmBookingBtn")?.addEventListener("click",confirmBooking);
 
-  sessionStorage.setItem("c7_booking_professional_name",professionalName);
-
-  alert("Próxima etapa: data e horários disponíveis. Vamos montar agora.");
+$("newBookingBtn")?.addEventListener("click",async()=>{
+  selectedServiceIds=new Set();
+  selectedProfessional="";
+  selectedSlot=null;
+  availableSlots=[];
+  sessionStorage.removeItem("c7_booking_service_ids");
+  sessionStorage.removeItem("c7_booking_professional_id");
+  sessionStorage.removeItem("c7_booking_professional_name");
+  sessionStorage.removeItem("c7_booking_appointment_id");
+  await goToServices();
 });
 
 (function restoreIdentity(){
