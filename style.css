@@ -691,3 +691,189 @@ button{cursor:pointer}
     grid-template-columns:1fr;
   }
 }
+
+
+/* ÁREA DO CLIENTE */
+.customer-area-top{
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:12px;
+}
+.customer-area-link{
+  padding:7px 10px;
+  border:1px solid #d8c7b8;
+  border-radius:999px;
+  background:#fffaf5;
+  color:#6d4c35;
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.65px;
+}
+.customer-area-link:hover{
+  background:#f1e5da;
+}
+.customer-area-cta{
+  min-height:46px;
+  border:1px solid #b99476;
+  border-radius:11px;
+  background:#f4e9df;
+  color:#563b29;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.55px;
+}
+.customer-area-cta:hover{
+  background:#ead9c9;
+}
+.portal-profile{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.portal-profile>div{
+  padding:11px;
+  border:1px solid #e1d5ca;
+  border-radius:11px;
+  background:#fbf6f0;
+}
+.portal-profile span{
+  display:block;
+  color:#947961;
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:.55px;
+}
+.portal-profile strong{
+  display:block;
+  margin-top:4px;
+  font-size:10px;
+  color:#33271e;
+}
+.portal-section{
+  display:grid;
+  gap:8px;
+}
+.portal-section-head span{
+  color:#8f735c;
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.7px;
+}
+.portal-list{
+  display:grid;
+  gap:7px;
+}
+.portal-appointment{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px;
+  border:1px solid #e1d5ca;
+  border-radius:11px;
+  background:#fff;
+}
+.portal-appointment>div{
+  min-width:0;
+  display:grid;
+  gap:3px;
+}
+.portal-appointment span{
+  color:#916f55;
+  font-size:8px;
+  font-weight:800;
+}
+.portal-appointment strong{
+  color:#30251e;
+  font-size:10px;
+}
+.portal-appointment small{
+  color:#8b7d71;
+  font-size:8px;
+}
+.portal-appointment>strong{
+  flex:0 0 auto;
+  color:#714b31;
+  font:700 16px Oswald,sans-serif;
+}
+
+/* MODAL DE CONTA */
+.account-modal{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  display:grid;
+  place-items:center;
+  padding:20px;
+}
+.account-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(13,10,8,.68);
+  backdrop-filter:blur(4px);
+}
+.account-card{
+  position:relative;
+  z-index:1;
+  width:min(100%,440px);
+  padding:24px;
+  border:1px solid rgba(177,132,96,.28);
+  border-radius:20px;
+  background:#fffaf5;
+  box-shadow:0 24px 80px rgba(0,0,0,.26);
+}
+.account-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:16px;
+}
+.account-head h2{
+  margin:6px 0 0;
+  font:700 30px/1 Oswald,sans-serif;
+}
+.account-close{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border:1px solid #dfd2c6;
+  border-radius:50%;
+  background:#fff;
+  color:#624734;
+  font-size:18px;
+}
+.account-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-bottom:16px;
+  padding:4px;
+  border-radius:11px;
+  background:#eee4da;
+}
+.account-tabs button{
+  min-height:34px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:#806c5c;
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.5px;
+}
+.account-tabs button.active{
+  background:#fff;
+  color:#4a3424;
+  box-shadow:0 3px 12px rgba(76,49,30,.08);
+}
+
+@media(max-width:560px){
+  .portal-profile{
+    grid-template-columns:1fr;
+  }
+  .portal-appointment{
+    align-items:flex-start;
+  }
+}
