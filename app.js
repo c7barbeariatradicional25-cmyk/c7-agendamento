@@ -1006,6 +1006,155 @@ async function linkPendingCustomer(){
   return true;
 }
 
+
+function closeProfileSettings(){
+  $("profileSettingsModal")?.classList.add("hidden");
+  $("profileSettingsMessage").textContent="";
+}
+
+async function openProfileSettings(){
+  const {data,error}=await supabase.rpc("get_my_account_details");
+
+  if(error||!data?.length){
+    alert("Não foi possível carregar seus dados.");
+    return;
+  }
+
+  const profile=data[0];
+  $("profileFullName").value=profile.full_name||"";
+  $("profilePhone").value=profile.phone||"";
+  $("profileBirthDate").value=profile.birth_date||"";
+  $("profileMarketingOptIn").checked=Boolean(profile.marketing_opt_in);
+  $("profileEmail").value=profile.email||"";
+  $("profileSettingsMessage").textContent="";
+  $("profileSettingsModal").classList.remove("hidden");
+}
+
+function closePasswordModal(){
+  $("passwordModal")?.classList.add("hidden");
+  $("passwordMessage").textContent="";
+  $("passwordForm")?.reset();
+}
+
+function openPasswordModal(){
+  $("passwordMessage").textContent="";
+  $("passwordForm")?.reset();
+  $("passwordModal").classList.remove("hidden");
+}
+
+$("profilePhone")?.addEventListener("input",e=>{
+  e.target.value=formatPhone(e.target.value);
+});
+
+$("editProfileBtn")?.addEventListener("click",openProfileSettings);
+$("changePasswordBtn")?.addEventListener("click",openPasswordModal);
+
+document.querySelectorAll("[data-close-profile-settings]").forEach(el=>{
+  el.addEventListener("click",closeProfileSettings);
+});
+
+document.querySelectorAll("[data-close-password-modal]").forEach(el=>{
+  el.addEventListener("click",closePasswordModal);
+});
+
+$("profileSettingsForm")?.addEventListener("submit",async e=>{
+  e.preventDefault();
+
+  const name=$("profileFullName").value.trim();
+  const phone=$("profilePhone").value.trim();
+  const birthDate=$("profileBirthDate").value||null;
+
+  if(name.length<2){
+    $("profileSettingsMessage").textContent="Informe seu nome.";
+    return;
+  }
+
+  if(phone.replace(/\D/g,"").length<10){
+    $("profileSettingsMessage").textContent="Informe um WhatsApp válido.";
+    return;
+  }
+
+  $("profileSettingsMessage").textContent="Salvando alterações...";
+
+  const {error}=await supabase.rpc("update_my_customer_profile",{
+    p_full_name:name,
+    p_phone:phone,
+    p_birth_date:birthDate,
+    p_marketing_opt_in:$("profileMarketingOptIn").checked
+  });
+
+  if(error){
+    const message=String(error.message||"");
+    $("profileSettingsMessage").textContent=
+      message.includes("já está vinculado")
+        ?"Este WhatsApp já está vinculado a outro cliente."
+        :message.includes("WhatsApp inválido")
+          ?"Informe um WhatsApp válido."
+          :"Não foi possível salvar seus dados.";
+    return;
+  }
+
+  sessionStorage.setItem("c7_booking_customer_name",name);
+  sessionStorage.setItem("c7_booking_customer_phone",phone);
+  closeProfileSettings();
+  await loadCustomerPortal();
+});
+
+$("passwordForm")?.addEventListener("submit",async e=>{
+  e.preventDefault();
+
+  const password=$("newPassword").value;
+  const confirmPassword=$("confirmNewPassword").value;
+
+  if(password.length<8){
+    $("passwordMessage").textContent="A senha precisa ter pelo menos 8 caracteres.";
+    return;
+  }
+
+  if(password!==confirmPassword){
+    $("passwordMessage").textContent="As senhas não coincidem.";
+    return;
+  }
+
+  $("passwordMessage").textContent="Atualizando sua senha...";
+
+  const {error}=await supabase.auth.updateUser({password});
+
+  if(error){
+    $("passwordMessage").textContent="Não foi possível atualizar sua senha.";
+    return;
+  }
+
+  $("passwordMessage").textContent="Senha atualizada com sucesso.";
+  setTimeout(closePasswordModal,700);
+});
+
+$("forgotPasswordBtn")?.addEventListener("click",async()=>{
+  const email=$("accountEmail").value.trim().toLowerCase();
+
+  if(!email){
+    $("accountMessage").textContent="Informe seu e-mail para recuperar a senha.";
+    return;
+  }
+
+  $("accountMessage").textContent="Enviando e-mail de recuperação...";
+
+  const {error}=await supabase.auth.resetPasswordForEmail(email,{
+    redirectTo:window.location.origin
+  });
+
+  $("accountMessage").textContent=error
+    ?"Não foi possível enviar a recuperação de senha."
+    :"Enviamos um link para redefinir sua senha.";
+});
+
+supabase.auth.onAuthStateChange(async(event)=>{
+  if(event==="PASSWORD_RECOVERY"){
+    closeAccountModal();
+    openPasswordModal();
+  }
+});
+
 async function openPortalOrLogin(){
   const {data:{session}}=await supabase.auth.getSession();
   if(session){
