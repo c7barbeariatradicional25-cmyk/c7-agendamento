@@ -32,6 +32,9 @@
 
     <section class="form-panel">
       <div class="form-card">
+        <div class="customer-area-top">
+          <button id="openCustomerAreaBtn" class="customer-area-link" type="button">MINHA ÁREA</button>
+        </div>
         <div class="form-heading">
           <span class="eyebrow">COMEÇAR AGENDAMENTO</span>
           <h2>Quem vai agendar?</h2>
@@ -226,11 +229,47 @@
               </button>
             </div>
 
+            <button id="createCustomerAreaBtn" class="customer-area-cta" type="button">
+              CRIAR MINHA ÁREA C7
+            </button>
+
             <button id="newBookingBtn" class="continue-btn" type="button">
               FAZER OUTRO AGENDAMENTO
               <span>→</span>
             </button>
           </div>
+        </section>
+
+        <section id="customerPortalStep" class="booking-step-panel hidden">
+          <div class="step-header">
+            <button id="backFromPortalBtn" class="back-btn" type="button">← VOLTAR</button>
+            <span class="eyebrow">MINHA ÁREA C7</span>
+            <h2 id="portalWelcome">Sua conta</h2>
+            <p>Veja seus próximos horários e seu histórico na C7.</p>
+          </div>
+
+          <div id="portalProfile" class="portal-profile"></div>
+
+          <div class="portal-section">
+            <div class="portal-section-head">
+              <span>PRÓXIMOS AGENDAMENTOS</span>
+            </div>
+            <div id="portalUpcomingList" class="portal-list"></div>
+          </div>
+
+          <div class="portal-section">
+            <div class="portal-section-head">
+              <span>HISTÓRICO</span>
+            </div>
+            <div id="portalHistoryList" class="portal-list"></div>
+          </div>
+
+          <button id="portalNewBookingBtn" class="continue-btn" type="button">
+            NOVO AGENDAMENTO
+            <span>→</span>
+          </button>
+
+          <button id="portalLogoutBtn" class="secondary-action-btn" type="button">SAIR DA CONTA</button>
         </section>
 
         <div class="privacy-note">
@@ -240,6 +279,43 @@
       </div>
     </section>
   </main>
+
+  <div id="customerAccountModal" class="account-modal hidden" role="dialog" aria-modal="true">
+    <div class="account-backdrop" data-close-customer-account></div>
+    <section class="account-card">
+      <div class="account-head">
+        <div>
+          <span class="eyebrow">MINHA ÁREA C7</span>
+          <h2 id="accountModalTitle">Entrar</h2>
+        </div>
+        <button type="button" class="account-close" data-close-customer-account>×</button>
+      </div>
+
+      <div class="account-tabs">
+        <button id="accountLoginTab" type="button" class="active">ENTRAR</button>
+        <button id="accountCreateTab" type="button">CRIAR CONTA</button>
+      </div>
+
+      <form id="customerAccountForm" class="identity-form">
+        <label>
+          <span>E-mail</span>
+          <input id="accountEmail" type="email" autocomplete="email" required>
+        </label>
+
+        <label>
+          <span>Senha</span>
+          <input id="accountPassword" type="password" minlength="8" autocomplete="current-password" required>
+        </label>
+
+        <p id="accountMessage" class="form-message"></p>
+
+        <button id="accountSubmitBtn" class="continue-btn" type="submit">
+          ENTRAR
+          <span>→</span>
+        </button>
+      </form>
+    </section>
+  </div>
 
   <script type="module" src="./app.js"></script>
 </body>
