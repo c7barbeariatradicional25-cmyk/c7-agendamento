@@ -155,6 +155,73 @@
           </button>
         </section>
 
+        <section id="scheduleStep" class="booking-step-panel hidden">
+          <div class="step-header">
+            <button id="backToProfessionalBtn" class="back-btn" type="button">← VOLTAR</button>
+            <span class="eyebrow">ETAPA 4 DE 4</span>
+            <h2>Escolha seu horário</h2>
+            <p>Os horários abaixo já consideram expediente, bloqueios e outros agendamentos.</p>
+          </div>
+
+          <div class="date-picker-card">
+            <label>
+              <span>DATA</span>
+              <input id="bookingDate" type="date">
+            </label>
+            <div id="selectedBookingProfessional" class="date-professional">
+              <span>PROFISSIONAL</span>
+              <strong>—</strong>
+            </div>
+          </div>
+
+          <div id="slotsList" class="slots-list">
+            <div class="loading-state">Escolha uma data para ver os horários.</div>
+          </div>
+
+          <div class="booking-summary">
+            <div>
+              <span>DATA</span>
+              <strong id="scheduleDateSummary">—</strong>
+            </div>
+            <div>
+              <span>HORÁRIO</span>
+              <strong id="scheduleTimeSummary">—</strong>
+            </div>
+            <div>
+              <span>TOTAL</span>
+              <strong id="schedulePriceSummary">R$ 0,00</strong>
+            </div>
+          </div>
+
+          <p id="scheduleMessage" class="form-message"></p>
+
+          <button id="confirmBookingBtn" class="continue-btn" type="button" disabled>
+            CONFIRMAR AGENDAMENTO
+            <span>✓</span>
+          </button>
+        </section>
+
+        <section id="confirmationStep" class="booking-step-panel hidden">
+          <div class="confirmation-box">
+            <div class="identified-icon">✓</div>
+            <span class="eyebrow">AGENDAMENTO CONFIRMADO</span>
+            <h2 id="confirmationTitle">Horário reservado.</h2>
+            <p id="confirmationText">Seu agendamento foi registrado na C7.</p>
+
+            <div class="confirmation-details">
+              <div><span>DATA</span><strong id="confirmationDate">—</strong></div>
+              <div><span>HORÁRIO</span><strong id="confirmationTime">—</strong></div>
+              <div><span>PROFISSIONAL</span><strong id="confirmationProfessional">—</strong></div>
+              <div><span>SERVIÇOS</span><strong id="confirmationServices">—</strong></div>
+            </div>
+
+            <button id="newBookingBtn" class="continue-btn" type="button">
+              FAZER OUTRO AGENDAMENTO
+              <span>→</span>
+            </button>
+          </div>
+        </section>
+
         <div class="privacy-note">
           <strong>Seus dados ficam protegidos.</strong>
           <span>Usamos suas informações apenas para seu atendimento e relacionamento com a C7.</span>
