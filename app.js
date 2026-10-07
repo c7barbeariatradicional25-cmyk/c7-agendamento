@@ -710,9 +710,14 @@ function portalAppointmentRow(item,interactive=false){
 }
 
 async function loadCustomerPortal(){
-  const [{data:profile,error:profileError},{data:appointments,error:appointmentError}]=await Promise.all([
+  const [
+    {data:profile,error:profileError},
+    {data:appointments,error:appointmentError},
+    {data:benefits,error:benefitsError}
+  ]=await Promise.all([
     supabase.rpc("get_my_customer_profile"),
-    supabase.rpc("get_my_appointments")
+    supabase.rpc("get_my_appointments"),
+    supabase.rpc("get_my_benefits")
   ]);
 
   if(profileError||!profile?.length){
@@ -737,6 +742,37 @@ async function loadCustomerPortal(){
     <div><span>E-MAIL</span><strong>${customer.email||"—"}</strong></div>
     <div><span>BARBEIRO PREFERIDO</span><strong>${customer.preferred_professional_name||"Ainda não definido"}</strong></div>
   `;
+
+  const benefitRows=benefits||[];
+  if($("portalBenefitsList")){
+    if(benefitsError){
+      $("portalBenefitsList").innerHTML='<div class="loading-state error">Não foi possível carregar seus benefícios.</div>';
+    }else if(!benefitRows.length){
+      $("portalBenefitsList").innerHTML='<div class="loading-state">Nenhum benefício ativo no momento.</div>';
+    }else{
+      $("portalBenefitsList").innerHTML=benefitRows.map(item=>{
+        const discount=item.discount_type==="percent"
+          ?`${Number(item.discount_value||0).toLocaleString("pt-BR")}% OFF`
+          :money(item.discount_value);
+
+        const valid=item.valid_until
+          ?`Válido até ${new Date(item.valid_until+"T12:00:00").toLocaleDateString("pt-BR")}`
+          :"Benefício ativo";
+
+        return `
+          <article class="benefit-card">
+            <div>
+              <span>${item.benefit_type==="birthday"?"ANIVERSÁRIO":"PLANO ATIVO"}</span>
+              <strong>${item.title||"Benefício C7"}</strong>
+              <small>${item.description||valid}</small>
+            </div>
+            <div class="benefit-value">${discount}</div>
+            <em>${valid}</em>
+          </article>
+        `;
+      }).join("");
+    }
+  }
 
   const now=new Date();
   const upcoming=rows.filter(item=>
