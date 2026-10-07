@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#17130f">
+  <title>Agendamento | C7 Barbearia Tradicional</title>
+  <link rel="icon" href="https://cjtgjqxkyvgjlhylrvas.supabase.co/storage/v1/object/public/c7-assets/logos/logo-c7.png.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="booking-shell">
+    <section class="brand-panel">
+      <div class="brand-overlay"></div>
+      <div class="brand-content">
+        <img class="brand-logo" src="https://cjtgjqxkyvgjlhylrvas.supabase.co/storage/v1/object/public/c7-assets/logos/logo-c7.png.png" alt="C7 Barbearia Tradicional">
+        <span class="eyebrow">C7 BARBEARIA TRADICIONAL</span>
+        <h1>Seu horário.<br>Do seu jeito.</h1>
+        <p>Agende em poucos passos e acompanhe tudo pela sua área C7.</p>
+
+        <div class="booking-steps">
+          <div class="step active"><span>01</span><strong>Identificação</strong></div>
+          <div class="step"><span>02</span><strong>Serviços</strong></div>
+          <div class="step"><span>03</span><strong>Profissional</strong></div>
+          <div class="step"><span>04</span><strong>Horário</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-panel">
+      <div class="form-card">
+        <div class="form-heading">
+          <span class="eyebrow">COMEÇAR AGENDAMENTO</span>
+          <h2>Quem vai agendar?</h2>
+          <p>Seu WhatsApp identifica seu cadastro na C7. Se você já é cliente, seus dados continuam no mesmo perfil.</p>
+        </div>
+
+        <form id="customerIdentityForm" class="identity-form">
+          <label>
+            <span>Seu nome</span>
+            <input id="customerName" type="text" autocomplete="name" placeholder="Ex.: João Silva" required>
+          </label>
+
+          <label>
+            <span>WhatsApp</span>
+            <input id="customerPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(62) 99999-9999" required>
+          </label>
+
+          <div class="optional-toggle">
+            <button id="showOptionalBtn" type="button">+ ADICIONAR E-MAIL E ANIVERSÁRIO</button>
+          </div>
+
+          <div id="optionalFields" class="optional-fields hidden">
+            <label>
+              <span>E-mail <small>opcional</small></span>
+              <input id="customerEmail" type="email" autocomplete="email" placeholder="voce@email.com">
+            </label>
+
+            <label>
+              <span>Data de nascimento <small>opcional</small></span>
+              <input id="customerBirthDate" type="date">
+            </label>
+          </div>
+
+          <label class="consent-row">
+            <input id="marketingOptIn" type="checkbox">
+            <span>Quero receber novidades, benefícios e condições especiais da C7.</span>
+          </label>
+
+          <p id="identityMessage" class="form-message"></p>
+
+          <button id="continueBtn" class="continue-btn" type="submit">
+            CONTINUAR
+            <span>→</span>
+          </button>
+        </form>
+
+        <div id="identifiedState" class="identified-state hidden">
+          <div class="identified-icon">✓</div>
+          <span>IDENTIFICAÇÃO CONCLUÍDA</span>
+          <h3 id="identifiedName">Tudo certo.</h3>
+          <p>Agora vamos escolher os serviços do seu agendamento.</p>
+          <button id="nextStepBtn" class="continue-btn" type="button">
+            ESCOLHER SERVIÇOS
+            <span>→</span>
+          </button>
+        </div>
+
+        <div class="privacy-note">
+          <strong>Seus dados ficam protegidos.</strong>
+          <span>Usamos suas informações apenas para seu atendimento e relacionamento com a C7.</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
