@@ -1256,11 +1256,17 @@ $("customerAccountForm")?.addEventListener("submit",async e=>{
     return;
   }
 
-  const linked=await linkPendingCustomer();
+  let linked=await linkPendingCustomer();
+
+  if(!linked){
+    const {data:customerId,error:emailLinkError}=await supabase.rpc("link_current_user_by_email");
+    linked=!emailLinkError&&Boolean(customerId);
+  }
+
   $("accountSubmitBtn").disabled=false;
 
   if(!linked){
-    $("accountMessage").textContent="Entramos na conta, mas ela não corresponde ao cliente deste agendamento.";
+    $("accountMessage").textContent="Não encontramos uma Área C7 vinculada a esta conta.";
     return;
   }
 
