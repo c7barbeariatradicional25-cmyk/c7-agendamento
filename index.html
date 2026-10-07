@@ -280,6 +280,40 @@
     </section>
   </main>
 
+  <div id="rescheduleModal" class="account-modal hidden" role="dialog" aria-modal="true">
+    <div class="account-backdrop" data-close-reschedule></div>
+    <section class="account-card">
+      <div class="account-head">
+        <div>
+          <span class="eyebrow">REAGENDAR</span>
+          <h2>Novo horário</h2>
+        </div>
+        <button type="button" class="account-close" data-close-reschedule>×</button>
+      </div>
+
+      <div class="reschedule-info">
+        <div><span>ATENDIMENTO</span><strong id="rescheduleServiceName">—</strong></div>
+        <div><span>PROFISSIONAL</span><strong id="rescheduleProfessionalName">—</strong></div>
+      </div>
+
+      <label class="reschedule-date-label">
+        <span>Nova data</span>
+        <input id="rescheduleDate" type="date">
+      </label>
+
+      <div id="rescheduleSlots" class="slots-list">
+        <div class="loading-state">Escolha uma data.</div>
+      </div>
+
+      <p id="rescheduleMessage" class="form-message"></p>
+
+      <button id="confirmRescheduleBtn" class="continue-btn" type="button" disabled>
+        CONFIRMAR NOVO HORÁRIO
+        <span>✓</span>
+      </button>
+    </section>
+  </div>
+
   <div id="customerAccountModal" class="account-modal hidden" role="dialog" aria-modal="true">
     <div class="account-backdrop" data-close-customer-account></div>
     <section class="account-card">
